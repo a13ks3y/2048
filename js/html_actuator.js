@@ -62,7 +62,10 @@ HTMLActuator.prototype.addTile = function (tile) {
   this.applyClasses(wrapper, classes);
 
   inner.classList.add("tile-inner");
-  inner.textContent = tile.value;
+  //inner.textContent = tile.value;
+  inner.setAttribute('title', window.alchemy_names.lang[tile.value]);
+  inner.style.backgroundImage = 'url(http://littlealchemy.com/img/base/'+ (parseInt(tile.value) + 1) +'.png)';
+
 
   if (tile.previousPosition) {
     // Make sure that the tile gets rendered in the previous position first

@@ -4,7 +4,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.storageManager = new StorageManager;
   this.actuator       = new Actuator;
 
-  this.startTiles     = 2;
+  this.startTiles     = 1;
 
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
@@ -68,7 +68,8 @@ GameManager.prototype.addStartTiles = function () {
 // Adds a tile in a random position
 GameManager.prototype.addRandomTile = function () {
   if (this.grid.cellsAvailable()) {
-    var value = Math.random() < 0.9 ? 2 : ['+', '-', '*', '/'][Math.floor(Math.random() * (3 - 0 + 1)) + 0] + '2';
+    var value = Math.floor(Math.random() * 4);
+      //window.alchemy_names.lang[];
     var tile = new Tile(this.grid.randomAvailableCell(), value);
 
     this.grid.insertTile(tile);
@@ -150,36 +151,54 @@ GameManager.prototype.move = function (direction) {
       if (tile) {
         var positions = self.findFarthestPosition(cell, vector);
         var next      = self.grid.cellContent(positions.next);
-          // Only one merger per row traversal?
-          if (next &&
-              ((next.value === tile.value && typeof next.value == 'number' && typeof tile.value == 'number')
-                  || (typeof tile.value == 'string' && typeof next.value == 'number')) && !next.mergedFrom) {
 
-              var newValue = tile.value * 2;
-              var operation = tile.value[0];
-              var value = Number(tile.value.toString().substr(1));
-              switch(operation){
-                  case '+' : newValue = value + next.value; break;
-                  case '-' : newValue = Math.abs(value - next.value); break;
-                  case '/' : newValue = value > next.value ? value / next.value : next.value / value; break;
-                  case '*' : newValue = value * next.value; break;
-                  default: newValue = tile.value * 2;
+          // Only one merger per row traversal?
+          if (next && !next.mergedFrom) {
+              var base = window.alchemy_base.base;
+              var newValue;
+              var found = false;
+              base.some(function (newElement, index) {
+                  newElement.some(function(elSet){
+                      if (elSet) {
+                          var tIndex = elSet.indexOf(tile.value.toString());
+                          var nIndex = elSet.indexOf(next.value.toString());
+                          if(tIndex !== -1 && nIndex !== -1 && (tIndex !== nIndex)){
+                              found = true;
+                              return true;
+                          }
+                      }
+                  });
+                  if (found) {
+                      newValue = index;
+                      return true;
+                  }
+              });
+
+              if (!found && tile.value === next.value) {
+                  newValue = tile.value;
+                  found = true;
               }
 
-              var merged = new Tile(positions.next, newValue);
-              merged.mergedFrom = [tile, next];
+              if (found) {
 
-              self.grid.insertTile(merged);
-              self.grid.removeTile(tile);
+                  var merged = new Tile(positions.next, newValue);
+                  merged.mergedFrom = [tile, next];
 
-              // Converge the two tiles' positions
-              tile.updatePosition(positions.next);
+                  self.grid.insertTile(merged);
+                  self.grid.removeTile(tile);
 
-              // Update the score
-              self.score += merged.value;
+                  // Converge the two tiles' positions
+                  tile.updatePosition(positions.next);
 
-              // The mighty 2048 tile
-              if (merged.value === 2048) self.won = true;
+                  // Update the score
+                  self.score += merged.value;
+
+                  // The mighty 2048 tile
+                  if (merged.value === 2048) self.won = true;
+              } else {
+                  self.moveTile(tile, positions.farthest);
+              }
+
           } else {
               self.moveTile(tile, positions.farthest);
 
@@ -269,8 +288,23 @@ GameManager.prototype.tileMatchesAvailable = function () {
 
           var other  = self.grid.cellContent(cell);
 
-          if (other && !isNaN(other.value) && other.value === tile.value) {
-            return true; // These two tiles can be merged
+          if (other) {
+              var found = false;
+              window.alchemy_base.base.some(function (newElement, index) {
+                  newElement.some(function(elSet){
+                      if(elSet && elSet.indexOf(tile.value) !== -1 && elSet.indexOf(next.value) !== -1){
+                          found = true;
+                          return true;
+                      }
+                  });
+                  if (found) {
+                      return true;
+                  }
+              });
+              if (!found && tile.value === other.value) {
+                  found = true;
+              }
+              return found; // These two tiles can be merged
           }
         }
       }
