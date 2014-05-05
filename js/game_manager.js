@@ -68,7 +68,7 @@ GameManager.prototype.addStartTiles = function () {
 // Adds a tile in a random position
 GameManager.prototype.addRandomTile = function () {
   if (this.grid.cellsAvailable()) {
-    var value = Math.random() < 0.9 ? 2 : 4;
+    var value = Math.random() < 0.9 ? 2 : ['-', '*', '/'][Math.floor(Math.random() * (3 - 0 + 1)) + 0];
     var tile = new Tile(this.grid.randomAvailableCell(), value);
 
     this.grid.insertTile(tile);
@@ -147,30 +147,61 @@ GameManager.prototype.move = function (direction) {
     traversals.y.forEach(function (y) {
       cell = { x: x, y: y };
       tile = self.grid.cellContent(cell);
-
       if (tile) {
         var positions = self.findFarthestPosition(cell, vector);
         var next      = self.grid.cellContent(positions.next);
+        if (next) {
+            var nextPositions = self.findFarthestPosition(next, vector);
+            var nextNext      = self.grid.cellContent(nextPositions.next);
 
-        // Only one merger per row traversal?
-        if (next && next.value === tile.value && !next.mergedFrom) {
-          var merged = new Tile(positions.next, tile.value * 2);
-          merged.mergedFrom = [tile, next];
+            if (nextNext && next && isNaN(next.value) && !next.mergedFrom && !isNaN(tile.value) && !isNaN(nextNext.value)) {
 
-          self.grid.insertTile(merged);
-          self.grid.removeTile(tile);
+                var newValue;
+                switch(next.value) {
+                    case '-' : newValue = Math.abs(tile.value - nextNext.value); break;
+                    case '/' : newValue = tile.value > nextNext.value ? tile.value / nextNext.value : nextNext.value / tile.value; break;
+                    case '*' : newValue = tile.value * nextNext.value; break;
+                }
+                //console.log(newValue, '=', tile.value, next.value, nextNext.value);
 
-          // Converge the two tiles' positions
-          tile.updatePosition(positions.next);
+                var merged = new Tile(nextPositions.next, newValue);
+                merged.mergedFrom = [tile, nextNext];
+                //todo strange issue
+                self.grid.insertTile(merged);
+                self.grid.removeTile(tile);
+                self.grid.removeTile(next);
+                //self.grid.removeTile(nextNext);
 
-          // Update the score
-          self.score += merged.value;
+                // Converge the two tiles' positions
+                tile.updatePosition(positions.next);
+                // Update the score
+                self.score += merged.value;
 
-          // The mighty 2048 tile
-          if (merged.value === 2048) self.won = true;
-        } else {
-          self.moveTile(tile, positions.farthest);
+                // The mighty 2048 tile
+                if (merged.value === 2048) self.won = true;
+            }
         }
+
+
+          // Only one merger per row traversal?
+          if (next && next.value === tile.value && !next.mergedFrom && !isNaN(tile.value) && !isNaN(next.value)) {
+              var merged = new Tile(positions.next, tile.value * 2);
+              merged.mergedFrom = [tile, next];
+
+              self.grid.insertTile(merged);
+              self.grid.removeTile(tile);
+
+              // Converge the two tiles' positions
+              tile.updatePosition(positions.next);
+
+              // Update the score
+              self.score += merged.value;
+
+              // The mighty 2048 tile
+              if (merged.value === 2048) self.won = true;
+          } else {
+              self.moveTile(tile, positions.farthest);
+          }
 
         if (!self.positionsEqual(cell, tile)) {
           moved = true; // The tile moved from its original cell!
@@ -256,7 +287,7 @@ GameManager.prototype.tileMatchesAvailable = function () {
 
           var other  = self.grid.cellContent(cell);
 
-          if (other && other.value === tile.value) {
+          if (other && !isNaN(other.value) && other.value === tile.value) {
             return true; // These two tiles can be merged
           }
         }

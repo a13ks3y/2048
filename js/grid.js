@@ -50,7 +50,6 @@ Grid.prototype.availableCells = function () {
       cells.push({ x: x, y: y });
     }
   });
-
   return cells;
 };
 
