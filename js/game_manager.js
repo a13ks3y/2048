@@ -9,9 +9,12 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
   this.inputManager.on("keepPlaying", this.keepPlaying.bind(this));
+  this.inputManager.on("arrowUp", this.actuator.finalElementsUp.bind(this.actuator));
+  this.inputManager.on("arrowDown", this.actuator.finalElementsDown.bind(this.actuator));
 
   this.setup();
 }
+
 
 // Restart the game
 GameManager.prototype.restart = function () {
@@ -42,12 +45,14 @@ GameManager.prototype.setup = function () {
     this.score       = previousState.score;
     this.over        = previousState.over;
     this.won         = previousState.won;
+    this.finalElements = previousState.finalElements;
     this.keepPlaying = previousState.keepPlaying;
   } else {
     this.grid        = new Grid(this.size);
     this.score       = 0;
     this.over        = false;
     this.won         = false;
+    this.finalElements = {};
     this.keepPlaying = false;
 
     // Add the initial tiles
@@ -94,6 +99,7 @@ GameManager.prototype.actuate = function () {
     over:       this.over,
     won:        this.won,
     bestScore:  this.storageManager.getBestScore(),
+    finalElements: this.finalElements,
     terminated: this.isGameTerminated()
   });
 
@@ -106,7 +112,8 @@ GameManager.prototype.serialize = function () {
     score:       this.score,
     over:        this.over,
     won:         this.won,
-    keepPlaying: this.keepPlaying
+    keepPlaying: this.keepPlaying,
+    finalElements: this.finalElements
   };
 };
 
@@ -179,7 +186,29 @@ GameManager.prototype.move = function (direction) {
                   found = true;
               }
 
+
+
               if (found) {
+
+                  // check is final element
+                  var final = true;
+                  base.some(function(element){
+                      element.some(function(elSet){
+                          if (elSet) {
+                              var newValueIndex = elSet.indexOf(newValue.toString());
+                              if (newValueIndex !== -1) {
+                                  final = false;
+                                  return true;
+                              }
+                          }
+                      });
+                      if (!final){
+                          return true;
+                      }
+                  });
+
+
+
 
                   var merged = new Tile(positions.next, newValue);
                   merged.mergedFrom = [tile, next];
@@ -195,6 +224,12 @@ GameManager.prototype.move = function (direction) {
 
                   // The mighty 2048 tile
                   if (merged.value === 2048) self.won = true;
+
+                  if (final) {
+                      self.finalElements[newValue] = self.finalElements[newValue] ? self.finalElements[newValue] + 1 : 1;
+                      self.grid.removeTile(merged);
+                      console.log('final element!', newValue, window.alchemy_names.lang[newValue]);
+                  }
               } else {
                   self.moveTile(tile, positions.farthest);
               }

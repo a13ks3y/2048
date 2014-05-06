@@ -3,6 +3,7 @@ function HTMLActuator() {
   this.scoreContainer   = document.querySelector(".score-container");
   this.bestContainer    = document.querySelector(".best-container");
   this.messageContainer = document.querySelector(".game-message");
+  this.finalElementsContainer = document.querySelector(".final-container ul");
 
   this.score = 0;
 }
@@ -24,6 +25,10 @@ HTMLActuator.prototype.actuate = function (grid, metadata) {
     self.updateScore(metadata.score);
     self.updateBestScore(metadata.bestScore);
 
+    if(metadata.finalElements) {
+        self.updateFinalElements(metadata.finalElements);
+    }
+
     if (metadata.terminated) {
       if (metadata.over) {
         self.message(false); // You lose
@@ -38,6 +43,15 @@ HTMLActuator.prototype.actuate = function (grid, metadata) {
 // Continues the game (both restart and keep playing)
 HTMLActuator.prototype.continueGame = function () {
   this.clearMessage();
+};
+
+HTMLActuator.prototype.finalElementsUp = function () {
+   var oldValue = parseInt(this.finalElementsContainer.style.marginTop);
+   this.finalElementsContainer.style.marginTop = (oldValue - 119) + 'px'
+};
+HTMLActuator.prototype.finalElementsDown = function () {
+   var oldValue = parseInt(this.finalElementsContainer.style.marginTop);
+   this.finalElementsContainer.style.marginTop = (oldValue + 119) + 'px'
 };
 
 HTMLActuator.prototype.clearContainer = function (container) {
@@ -62,12 +76,17 @@ HTMLActuator.prototype.addTile = function (tile) {
   this.applyClasses(wrapper, classes);
 
   inner.classList.add("tile-inner");
-  //inner.textContent = tile.value;
   inner.setAttribute('title', window.alchemy_names.lang[tile.value]);
   inner.style.backgroundImage = 'url(http://littlealchemy.com/img/base/'+ (parseInt(tile.value) + 1) +'.png)';
 
+    var spanTitle = document.createElement('span');
+    spanTitle.classList.add('title');
+    spanTitle.innerText = window.alchemy_names.lang[tile.value];
 
-  if (tile.previousPosition) {
+    inner.appendChild(spanTitle);
+
+
+    if (tile.previousPosition) {
     // Make sure that the tile gets rendered in the previous position first
     window.requestAnimationFrame(function () {
       classes[2] = self.positionClass({ x: tile.x, y: tile.y });
@@ -125,6 +144,33 @@ HTMLActuator.prototype.updateScore = function (score) {
 
 HTMLActuator.prototype.updateBestScore = function (bestScore) {
   this.bestContainer.textContent = bestScore;
+};
+
+HTMLActuator.prototype.updateFinalElements = function (finalElements) {
+    this.finalElementsContainer.innerHTML = '';
+    for (var elementIndex in finalElements) {
+        var count = finalElements[elementIndex];
+        var li = document.createElement('li');
+        li.classList.add('tile');
+        var inner = document.createElement('div');
+        inner.classList.add('tile-inner');
+        inner.setAttribute('title', window.alchemy_names.lang[elementIndex]);
+        inner.style.backgroundImage = 'url(http://littlealchemy.com/img/base/'+ (parseInt(elementIndex) + 1) +'.png)';
+
+        var countEl = document.createElement('span');
+        countEl.innerHTML = count > 1 ? count : '&nbsp;';
+        countEl.classList.add('count');
+        inner.appendChild(countEl);
+
+        var spanTitle = document.createElement('span');
+        spanTitle.classList.add('title');
+        spanTitle.innerText = window.alchemy_names.lang[elementIndex];
+
+        inner.appendChild(spanTitle);
+
+        li.appendChild(inner);
+        this.finalElementsContainer.appendChild(li);
+    }
 };
 
 HTMLActuator.prototype.message = function (won) {
