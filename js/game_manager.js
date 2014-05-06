@@ -4,7 +4,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.storageManager = new StorageManager;
   this.actuator       = new Actuator;
 
-  this.startTiles     = 1;
+  this.startTiles     = 5;
 
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
@@ -228,7 +228,6 @@ GameManager.prototype.move = function (direction) {
                   if (final) {
                       self.finalElements[newValue] = self.finalElements[newValue] ? self.finalElements[newValue] + 1 : 1;
                       self.grid.removeTile(merged);
-                      console.log('final element!', newValue, window.alchemy_names.lang[newValue]);
                   }
               } else {
                   self.moveTile(tile, positions.farthest);
