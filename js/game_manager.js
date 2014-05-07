@@ -168,10 +168,15 @@ GameManager.prototype.move = function (direction) {
                   newElement.some(function(elSet){
                       if (elSet) {
                           var tIndex = elSet.indexOf(tile.value.toString());
-                          var nIndex = elSet.indexOf(next.value.toString());
-                          if(tIndex !== -1 && nIndex !== -1 && (tIndex !== nIndex)){
-                              found = true;
-                              return true;
+                          if(tIndex !== -1){
+                              if(elSet.filter(function (value, index) {
+                                  return value === next.value.toString() && index != tIndex;
+                              }).length) {
+
+                                  found = true;
+                                  return true;
+                              }
+
                           }
                       }
                   });
@@ -326,9 +331,16 @@ GameManager.prototype.tileMatchesAvailable = function () {
               var found = false;
               window.alchemy_base.base.some(function (newElement, index) {
                   newElement.some(function(elSet){
-                      if(elSet && elSet.indexOf(tile.value) !== -1 && elSet.indexOf(next.value) !== -1){
-                          found = true;
-                          return true;
+                      if (elSet) {
+                          var tIndex = elSet.indexOf(tile.value);
+                          if(tIndex !== -1){
+                              if(elSet.filter(function (value, index) {
+                                  return value === other.value.toString() && index != tIndex;
+                              }).length) {
+                                  found = true;
+                                  return true;
+                              }
+                          }
                       }
                   });
                   if (found) {
