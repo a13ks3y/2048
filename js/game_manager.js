@@ -232,7 +232,12 @@ GameManager.prototype.move = function (direction) {
 
                   if (final) {
                       self.finalElements[newValue] = self.finalElements[newValue] ? self.finalElements[newValue] + 1 : 1;
-                      self.grid.removeTile(merged);
+                      //self.grid.removeTile(merged);
+                      self.grid.eachCell(function(x,y, cell){
+                          if (cell) {
+                              self.grid.removeTile(cell);
+                          }
+                      });
                   }
               } else {
                   self.moveTile(tile, positions.farthest);
