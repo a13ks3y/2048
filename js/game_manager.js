@@ -5,6 +5,7 @@ function GameManager(size, InputManager, Actuator, StorageManager) {
   this.actuator       = new Actuator;
 
   this.startTiles     = 2;
+  this.tileMultiplier = 1;
 
   this.inputManager.on("move", this.move.bind(this));
   this.inputManager.on("restart", this.restart.bind(this));
@@ -49,6 +50,7 @@ GameManager.prototype.setup = function () {
     this.over        = false;
     this.won         = false;
     this.keepPlaying = false;
+    this.tileMultiplier = 1;
 
     // Add the initial tiles
     this.addStartTiles();
@@ -69,6 +71,7 @@ GameManager.prototype.addStartTiles = function () {
 GameManager.prototype.addRandomTile = function () {
   if (this.grid.cellsAvailable()) {
     var value = Math.random() < 0.9 ? 2 : 4;
+    value *= this.tileMultiplier;
     var tile = new Tile(this.grid.randomAvailableCell(), value);
 
     this.grid.insertTile(tile);
@@ -105,16 +108,29 @@ GameManager.prototype.serialize = function () {
     score:       this.score,
     over:        this.over,
     won:         this.won,
+    tileMultiplier: this.tileMultiplier,
     keepPlaying: this.keepPlaying
   };
 };
 
 // Save all tile positions and remove merger info
 GameManager.prototype.prepareTiles = function () {
+  var self = this;
+  this.maxTile = 2;
   this.grid.eachCell(function (x, y, tile) {
     if (tile) {
       tile.mergedFrom = null;
       tile.savePosition();
+
+      if (tile.value > self.maxTile) {
+          self.maxTile = tile.value;
+      }
+      var minV1 = 2 * self.tileMultiplier;
+      var minV2 = 4 * self.tileMultiplier;
+      if (tile.value < minV1) {
+          console.log('!!!CHANGE', tile.value, 'to', minV1);
+          tile.value = minV1;
+      }
     }
   });
 };
@@ -141,7 +157,6 @@ GameManager.prototype.move = function (direction) {
 
   // Save the current tile positions and remove merger information
   this.prepareTiles();
-
   // Traverse the grid in the right direction and move tiles
   traversals.x.forEach(function (x) {
     traversals.y.forEach(function (y) {
@@ -167,7 +182,7 @@ GameManager.prototype.move = function (direction) {
           self.score += merged.value;
 
           // The mighty 2048 tile
-          if (merged.value === 2048) self.won = true;
+      if (merged.value === 2048) {self.won = true;}
         } else {
           self.moveTile(tile, positions.farthest);
         }
@@ -179,6 +194,11 @@ GameManager.prototype.move = function (direction) {
     });
   });
 
+  if (this.maxTile > 2048) {
+      this.tileMultiplier = Math.floor(this.maxTile / 2048) + 1;
+      this.tileMultiplier = Math.floor(this.tileMultiplier / 2) * 2;
+      console.log('tileMultiplier', this.tileMultiplier);
+  }
   if (moved) {
     this.addRandomTile();
 
