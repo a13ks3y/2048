@@ -77,7 +77,7 @@ HTMLActuator.prototype.addTile = function (tile) {
 
   inner.classList.add("tile-inner");
   inner.setAttribute('title', window.alchemy_names.lang[tile.value]);
-  inner.style.backgroundImage = 'url(http://littlealchemy.com/img/base/'+ (parseInt(tile.value) + 1) +'.png)';
+  inner.style.backgroundImage = 'url(data:image/png;base64,' + alchemy_images[(parseInt(tile.value) + 1)]  + ')';
 
     var spanTitle = document.createElement('span');
     spanTitle.classList.add('title');
@@ -155,7 +155,7 @@ HTMLActuator.prototype.updateFinalElements = function (finalElements) {
         var inner = document.createElement('div');
         inner.classList.add('tile-inner');
         inner.setAttribute('title', window.alchemy_names.lang[elementIndex]);
-        inner.style.backgroundImage = 'url(http://littlealchemy.com/img/base/'+ (parseInt(elementIndex) + 1) +'.png)';
+        inner.style.backgroundImage = 'url(data:image/png;base64,' + alchemy_images[(parseInt(elementIndex) + 1)]  + ')';
 
         var countEl = document.createElement('span');
         countEl.innerHTML = count > 1 ? count : '&nbsp;';
